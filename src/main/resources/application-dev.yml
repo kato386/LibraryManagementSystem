@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5555/library_management_system
+    username: username
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: localhost
+    port: 1025
+    username: ali
+    password: ali
+    properties:
+      mail:
+        smtp:
+          trust: "*"
+        auth: true
+        starttls:
+          enabled: true
+        connectiontimeout: 5000
+        timeout: 3000
+        writetimeout: 5000
+application:
+  security:
+    jwt:
+      secret-key: e23e6a5cbd6e0fdf83ab4c064d49114b5fe0623f6b2d26f525b3e1130aa9bb75a105f20e6bd45235ce768a932307f14c63c9f4be30101c117c220db8d62894d9bf117d05635a861dd1a85b2906302764542077cbea471a10fc68b9ea994d4709d3ac5471678f611ae85252b4cdb31d2c5f4899a39b6843307e6ac31705a181b51eda7d593ebe7d8e71d13b7db385bf1e1fd9b44719508ba5593f68861570166a0ec91d23958bfbfc9b868f28ccd1120f6b0c2237fb57bdbdd2b85fe563e21ea5c9352f94fe4481a10d73b84c4ae76444237dfd9c7552c63a8ea12bc43d03c6fac255566a4985fa8f04801bc22739a4188879bfdd4ce68cbd4ccae09b54210daa
+      expiration: 8640000
+  mailing:
+    frontend:
+      activation-url: http://localhost:4200/activate-account
+server:
+  port: 8088
