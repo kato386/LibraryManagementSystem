@@ -19,6 +19,7 @@ public class RegistrationRequest {
     @NotEmpty(message = "Lastname is mandatory.")
     @NotBlank(message = "Lastname is mandatory.")
     private String lastName;
+    @Email(message = "Email is not valid")
     @NotEmpty(message = "Username is mandatory.")
     @NotBlank(message = "Username is mandatory.")
     private String email;
