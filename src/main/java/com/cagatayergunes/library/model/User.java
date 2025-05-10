@@ -54,6 +54,9 @@ public class User implements UserDetails, Principal {
     @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles;
 
+    @OneToMany(mappedBy = "user")
+    private List<BookTransactionHistory> histories;
+
     @Override
     public String getName() {
         return email;

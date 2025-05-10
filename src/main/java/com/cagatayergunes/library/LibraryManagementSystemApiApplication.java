@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@EnableJpaAuditing
+@EnableJpaAuditing(auditorAwareRef = "auditorAware")
 @EnableAsync
 public class LibraryManagementSystemApiApplication {
 
@@ -21,9 +21,14 @@ public class LibraryManagementSystemApiApplication {
 	@Bean
 	public CommandLineRunner runner(RoleRepository roleRepository){
 		return args -> {
-			if(roleRepository.findByName("USER").isEmpty()){
+			if(roleRepository.findByName("PATRON").isEmpty()){
 				roleRepository.save(
-						Role.builder().name("USER").build()
+						Role.builder().name("PATRON").build()
+				);
+			}
+			if(roleRepository.findByName("LIBRARIAN").isEmpty()){
+				roleRepository.save(
+						Role.builder().name("LIBRARIAN").build()
 				);
 			}
 		};
