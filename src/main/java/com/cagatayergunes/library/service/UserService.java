@@ -10,9 +10,13 @@ import com.cagatayergunes.library.model.response.UserResponse;
 import com.cagatayergunes.library.repository.RoleRepository;
 import com.cagatayergunes.library.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
+@RequiredArgsConstructor
 public class UserService {
 
     UserRepository userRepository;

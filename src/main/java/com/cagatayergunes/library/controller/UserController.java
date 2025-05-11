@@ -19,7 +19,7 @@ import java.util.List;
 @Tag(name = "User")
 public class UserController {
 
-    UserService service;
+    private final UserService service;
 
     @PreAuthorize("hasAuthority('LIBRARIAN')")
     @GetMapping("/{id}")
