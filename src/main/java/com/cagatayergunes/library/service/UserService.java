@@ -19,9 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
-    UserRepository userRepository;
-    RoleRepository roleRepository;
-    UserMapper mapper;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserMapper mapper;
 
     public UserResponse getUserById(Long id) {
         User user =  getUser(id);
