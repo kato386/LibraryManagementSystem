@@ -4,15 +4,14 @@ import com.cagatayergunes.library.exception.handler.OperationNotPermittedExcepti
 import com.cagatayergunes.library.model.*;
 import com.cagatayergunes.library.model.request.AuthenticationRequest;
 import com.cagatayergunes.library.model.request.RegistrationRequest;
-import com.cagatayergunes.library.model.request.UpdateRoleRequest;
 import com.cagatayergunes.library.model.response.AuthenticationResponse;
 import com.cagatayergunes.library.repository.RoleRepository;
 import com.cagatayergunes.library.repository.TokenRepository;
 import com.cagatayergunes.library.repository.UserRepository;
 import com.cagatayergunes.library.security.JwtService;
 import jakarta.mail.MessagingException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -42,8 +42,12 @@ public class AuthenticationService {
 
 
     public void register(RegistrationRequest request) throws MessagingException {
+        log.info("Registering user: {}", request.getEmail());
         var userRole = roleRepository.findByName(RoleName.PATRON)
-                .orElseThrow(() -> new IllegalStateException("ROLE PATRON was not initialized."));
+                .orElseThrow(() -> {
+                    log.error("ROLE PATRON was not initialized.");
+                    return new IllegalStateException("ROLE PATRON was not initialized.");
+                });
 
         var user = User.builder()
                 .firstName(request.getFirstName())
@@ -55,6 +59,7 @@ public class AuthenticationService {
                 .roles(List.of(userRole))
                 .build();
         userRepository.save(user);
+        log.info("User {} saved successfully", user.getEmail());
         sendValidationEmail(user);
     }
 
@@ -69,6 +74,7 @@ public class AuthenticationService {
                 newToken,
                 "Account Activation"
         );
+        log.info("Activation email sent to {}", user.getEmail());
     }
 
     private String generateAndSaveActivationToken(User user){
@@ -81,6 +87,7 @@ public class AuthenticationService {
                 .build();
         tokenRepository.save(token);
 
+        log.debug("Activation token saved for user: {}", user.getEmail());
         return generatedToken;
     }
 
@@ -96,6 +103,7 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        log.info("Authentication attempt for user: {}", request.getEmail());
         var auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -106,27 +114,37 @@ public class AuthenticationService {
         var user = ((User)auth.getPrincipal());
         claims.put("fullName", user.getFullName());
         var jwt = jwtService.generateToken(claims, user);
+        log.info("JWT generated for user {}", user.getEmail());
 
         return AuthenticationResponse.builder()
                 .token(jwt).build();
     }
 
     public void activateAccount(String token) throws MessagingException {
+        log.info("Activating account using token: {}", token);
         Token savedToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new OperationNotPermittedException("Token not found."));
+                .orElseThrow(() -> {
+                    log.warn("Activation token not found: {}", token);
+                    return new OperationNotPermittedException("Token not found.");
+                });
 
         if(LocalDateTime.now().isAfter(savedToken.getExpiresAt())){
+            log.warn("Token expired for user {}, resending activation email", savedToken.getUser().getEmail());
             sendValidationEmail(savedToken.getUser());
             throw new OperationNotPermittedException("Activation token has expired. A new token has been send.");
         }
 
         var user = userRepository.findById(savedToken.getUser().getId())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+                .orElseThrow(() -> {
+                    log.error("User not found for activation.");
+                    return new UsernameNotFoundException("User not found.");
+                });
 
         user.setEnabled(true);
 
         userRepository.save(user);
         savedToken.setValidatedAt(LocalDateTime.now());
         tokenRepository.save(savedToken);
+        log.info("User {} activated successfully", user.getEmail());
     }
 }

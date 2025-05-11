@@ -12,3 +12,13 @@ server:
   port: 8088
   servlet:
     context-path: /api/v1/
+
+logging:
+  level:
+    root: INFO
+    com.cagatayergunes.library: DEBUG
+
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 30

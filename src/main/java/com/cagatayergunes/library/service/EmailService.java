@@ -22,6 +22,7 @@ import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {
+
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
@@ -34,34 +35,43 @@ public class EmailService {
             String activationCode,
             String subject
     ) throws MessagingException {
-        String templateName;
-        if (emailTemplate == null) {
-            templateName = "confirm-email";
-        } else {
-            templateName = emailTemplate.getName();
-        }
+        log.info("Preparing to send email to: {}", to);
+
+        String templateName = (emailTemplate != null) ? emailTemplate.getName() : "confirm-email";
+        log.debug("Using email template: {}", templateName);
+
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(
                 mimeMessage,
                 MULTIPART_MODE_MIXED,
                 UTF_8.name()
         );
+
         Map<String, Object> properties = new HashMap<>();
         properties.put("username", username);
         properties.put("confirmationUrl", confirmationUrl);
         properties.put("activation_code", activationCode);
+        log.debug("Email properties set: {}", properties);
 
         Context context = new Context();
         context.setVariables(properties);
 
-        helper.setFrom("contact@aliboucoding.com");
+        helper.setFrom("contact@cagatay.com");
         helper.setTo(to);
         helper.setSubject(subject);
+        log.debug("Email details set. From: {}, To: {}, Subject: {}", "contact@cagatay.com", to, subject);
 
-        String template = templateEngine.process(templateName, context);
-
-        helper.setText(template, true);
-
-        mailSender.send(mimeMessage);
+        try {
+            String template = templateEngine.process(templateName, context);
+            helper.setText(template, true);
+            mailSender.send(mimeMessage);
+            log.info("Email successfully sent to {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error while sending email to {}: {}", to, e.getMessage(), e);
+            throw new MessagingException("Unexpected error occurred while sending email", e);
+        }
     }
 }
