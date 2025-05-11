@@ -8,10 +8,18 @@ import com.cagatayergunes.library.service.BookService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("books")
@@ -118,5 +126,23 @@ public class BookController {
             @PathVariable("book_id") Long bookId
     ){
         return ResponseEntity.ok(service.approveReturnBorrowedBook(bookId));
+    }
+
+    @GetMapping("/overdue-books")
+    public ResponseEntity<InputStreamResource> downloadOverdueBooksReport() throws IOException {
+        String report = service.generateOverdueBooksReport();
+
+        File tempFile = File.createTempFile("overdue_books_report", ".txt");
+        try (FileWriter writer = new FileWriter(tempFile)) {
+            writer.write(report);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(tempFile));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=overdue_books_report.txt")
+                .contentType(MediaType.TEXT_PLAIN)
+                .contentLength(tempFile.length())
+                .body(resource);
     }
 }

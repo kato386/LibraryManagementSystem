@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -41,5 +42,16 @@ public class Book extends BaseEntity{
                 .mapToDouble(Feedback::getNote)
                 .average()
                 .orElse(0.0);
+    }
+
+    @Transient
+    public boolean isOverdue() {
+        if (histories == null || histories.isEmpty()) {
+            return false;
+        }
+
+        return histories.stream()
+                .filter(history -> history.getReturnDate() == null)
+                .anyMatch(history -> history.getDueDate().isBefore(LocalDateTime.now()));
     }
 }

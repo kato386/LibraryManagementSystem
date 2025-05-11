@@ -20,9 +20,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -227,5 +233,33 @@ public class BookService {
                 .orElseThrow(() -> new EntityNotFoundException("No book found with the id " + bookId));
 
         bookRepository.delete(book);
+    }
+
+    public String generateOverdueBooksReport() {
+        List<BookTransactionHistory> overdueHistories = bookTransactionHistoryRepository.findAll().stream()
+                .filter(history -> !history.isReturned() && history.getDueDate().isBefore(LocalDateTime.now()))
+                .toList();
+
+        if (overdueHistories.isEmpty()) {
+            return "No overdue books found.";
+        }
+
+        StringBuilder reportBuilder = new StringBuilder();
+        reportBuilder.append("Overdue Books Report\n");
+        reportBuilder.append("====================\n\n");
+
+        for (BookTransactionHistory history : overdueHistories) {
+            Book book = history.getBook();
+            User user = history.getUser();
+
+            reportBuilder.append("Title: ").append(book.getTitle()).append("\n");
+            reportBuilder.append("Author: ").append(book.getAuthorName()).append("\n");
+            reportBuilder.append("ISBN: ").append(book.getIsbn()).append("\n");
+            reportBuilder.append("Due Date: ").append(history.getDueDate()).append("\n");
+            reportBuilder.append("Currently with: ").append(user.getFirstName()).append(" ").append(user.getLastName()).append(" (").append(user.getEmail()).append(")\n");
+            reportBuilder.append("----------------------------\n");
+        }
+
+        return reportBuilder.toString();
     }
 }
