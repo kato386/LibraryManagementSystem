@@ -1,13 +1,20 @@
 package com.cagatayergunes.library;
 
 import com.cagatayergunes.library.model.Role;
+import com.cagatayergunes.library.model.RoleName;
+import com.cagatayergunes.library.model.User;
 import com.cagatayergunes.library.repository.RoleRepository;
+import com.cagatayergunes.library.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.List;
+import java.util.Set;
 
 @SpringBootApplication
 @EnableJpaAuditing(auditorAwareRef = "auditorAware")
@@ -19,17 +26,27 @@ public class LibraryManagementSystemApiApplication {
 	}
 
 	@Bean
-	public CommandLineRunner runner(RoleRepository roleRepository){
+	public CommandLineRunner runner(RoleRepository roleRepository, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
 		return args -> {
-			if(roleRepository.findByName("PATRON").isEmpty()){
-				roleRepository.save(
-						Role.builder().name("PATRON").build()
-				);
+			for (RoleName roleName : RoleName.values()) {
+				if (roleRepository.findByName(roleName).isEmpty()) {
+					roleRepository.save(Role.builder().name(roleName).build());
+				}
 			}
-			if(roleRepository.findByName("LIBRARIAN").isEmpty()){
-				roleRepository.save(
-						Role.builder().name("LIBRARIAN").build()
-				);
+
+			if (userRepository.findByFirstName("admin").isEmpty()) {
+				Role adminRole = roleRepository.findByName(RoleName.ADMIN)
+						.orElseThrow(() -> new IllegalStateException("Admin rolü eksik"));
+
+				User admin = new User();
+				admin.setFirstName("admin");
+				admin.setLastName("admin");
+				admin.setPassword(passwordEncoder.encode("admin123"));
+				admin.setEmail("admin@example.com");
+				admin.setEnabled(true);
+				admin.setRoles(List.of(adminRole));
+
+				userRepository.save(admin);
 			}
 		};
 	}

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -20,12 +21,14 @@ public class Book extends BaseEntity{
     private String authorName;
     private String isbn;
     private String synopsis;
+    private String genre;
+    private LocalDate publicationDate;
     private boolean shareable;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Feedback> feedbacks;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookTransactionHistory> histories;
 
     @Transient

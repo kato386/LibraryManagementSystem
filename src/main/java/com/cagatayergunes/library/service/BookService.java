@@ -185,9 +185,10 @@ public class BookService {
         }
 
         BookTransactionHistory history = bookTransactionHistoryRepository.findByBookAndReturnApprovedFalseAndReturnedTrue(book)
-                .orElseThrow(() -> new EntityNotFoundException("No active borrow transaction found or borrow for this book already approved for this book"));
+                .orElseThrow(() -> new EntityNotFoundException("No active borrow transaction found or this book already approved."));
 
         history.setReturnApproved(true);
+        history.setReturnDate(LocalDateTime.now());
         bookTransactionHistoryRepository.save(history);
 
         long lateDays = 0;
@@ -199,5 +200,32 @@ public class BookService {
         response.setLateDays(lateDays);
 
         return response;
+    }
+
+
+    public PageResponse<BookResponse> searchBooks(int page, int size, String title, String authorName, String isbn, String genre) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+
+        Page<Book> books = bookRepository.findByTitleContainingIgnoreCaseAndAuthorNameContainingIgnoreCaseAndIsbnContainingIgnoreCaseAndGenreContainingIgnoreCase(title, authorName, isbn, genre, pageable);
+        List<BookResponse> responses = books.getContent().stream()
+                .map(bookMapper::toBookResponse)
+                .toList();
+
+        return new PageResponse<>(
+                responses,
+                books.getNumber(),
+                books.getSize(),
+                books.getTotalElements(),
+                books.getTotalPages(),
+                books.isFirst(),
+                books.isLast()
+        );
+    }
+
+    public void deleteBook(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("No book found with the id " + bookId));
+
+        bookRepository.delete(book);
     }
 }

@@ -14,4 +14,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
         WHERE book.shareable = true
         """)
     Page<Book> findAllDisplayableBooks(Pageable pageable);
+
+    Page<Book> findByTitleContainingIgnoreCaseAndAuthorNameContainingIgnoreCaseAndIsbnContainingIgnoreCaseAndGenreContainingIgnoreCase(
+            String title, String authorName, String isbn, String genre, Pageable pageable);
 }

@@ -1,10 +1,10 @@
 package com.cagatayergunes.library.service;
 
-import com.cagatayergunes.library.model.EmailTemplateName;
-import com.cagatayergunes.library.model.Token;
-import com.cagatayergunes.library.model.User;
+import com.cagatayergunes.library.exception.handler.OperationNotPermittedException;
+import com.cagatayergunes.library.model.*;
 import com.cagatayergunes.library.model.request.AuthenticationRequest;
 import com.cagatayergunes.library.model.request.RegistrationRequest;
+import com.cagatayergunes.library.model.request.UpdateRoleRequest;
 import com.cagatayergunes.library.model.response.AuthenticationResponse;
 import com.cagatayergunes.library.repository.RoleRepository;
 import com.cagatayergunes.library.repository.TokenRepository;
@@ -42,8 +42,8 @@ public class AuthenticationService {
 
 
     public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new IllegalStateException("ROLE USER was not initialized."));
+        var userRole = roleRepository.findByName(RoleName.PATRON)
+                .orElseThrow(() -> new IllegalStateException("ROLE PATRON was not initialized."));
 
         var user = User.builder()
                 .firstName(request.getFirstName())
@@ -113,11 +113,11 @@ public class AuthenticationService {
 
     public void activateAccount(String token) throws MessagingException {
         Token savedToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid Token"));
+                .orElseThrow(() -> new OperationNotPermittedException("Token not found."));
 
         if(LocalDateTime.now().isAfter(savedToken.getExpiresAt())){
             sendValidationEmail(savedToken.getUser());
-            throw new RuntimeException("Activation token has expired. A new token has been send.");
+            throw new OperationNotPermittedException("Activation token has expired. A new token has been send.");
         }
 
         var user = userRepository.findById(savedToken.getUser().getId())

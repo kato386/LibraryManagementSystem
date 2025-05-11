@@ -21,9 +21,26 @@ public class BookController {
 
     private final BookService service;
 
+    @PreAuthorize("hasAuthority('LIBRARIAN')")
     @PostMapping
     public ResponseEntity<Long> saveBook(@Valid @RequestBody BookRequest request){
         return ResponseEntity.ok(service.save(request));
+    }
+
+    @PreAuthorize("hasAuthority('LIBRARIAN')")
+    @PutMapping("/{book-id}")
+    public ResponseEntity<BookResponse> updateBook(
+            @PathVariable("book-id") Long bookId,
+            @Valid @RequestBody BookRequest request
+    ) {
+        return ResponseEntity.ok(service.updateBook(bookId, request));
+    }
+
+    @PreAuthorize("hasAuthority('LIBRARIAN')")
+    @DeleteMapping("/{bookId}")
+    public ResponseEntity<Void> deleteBook(@PathVariable Long bookId) {
+        service.deleteBook(bookId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("{book-id}")
@@ -36,15 +53,28 @@ public class BookController {
     @GetMapping
     public ResponseEntity<PageResponse<BookResponse>> findAllBooks(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(name = "size", defaultValue = "0", required = false) int size
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size
     ){
         return ResponseEntity.ok(service.findAllBooks(page, size));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PageResponse<BookResponse>> searchBooks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String authorName,
+            @RequestParam(required = false) String isbn,
+            @RequestParam(required = false) String genre
+    ) {
+        PageResponse<BookResponse> response = service.searchBooks(page, size, title, authorName, isbn, genre);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/borrowed")
     public ResponseEntity<PageResponse<BorrowedBookResponse>> findAllBorrowedBooks(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(name = "size", defaultValue = "0", required = false) int size,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             Authentication connectedUser
     ){
         return ResponseEntity.ok(service.findAllBorrowedBooks(page, size, connectedUser));
@@ -53,23 +83,14 @@ public class BookController {
     @GetMapping("/returned")
     public ResponseEntity<PageResponse<BorrowedBookResponse>> findAllReturnedBooks(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(name = "size", defaultValue = "0", required = false) int size,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             Authentication connectedUser
     ){
         return ResponseEntity.ok(service.findAllReturnedBooks(page, size, connectedUser));
     }
 
-    @PutMapping("{book-id}")
-    @PreAuthorize("hasRole('LIBRARIAN')")
-    public ResponseEntity<BookResponse> updateBook(
-            @PathVariable("book-id") Long bookId,
-            @Valid @RequestBody BookRequest request
-    ) {
-        return ResponseEntity.ok(service.updateBook(bookId, request));
-    }
-
     @PatchMapping("/shareable/{book_id}")
-    @PreAuthorize("hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAuthority('LIBRARIAN')")
     public ResponseEntity<BookResponse> updateShareableStatus(
             @PathVariable("book_id") Long bookId
     ){
@@ -85,7 +106,6 @@ public class BookController {
     }
 
     @PatchMapping("/borrow/return/{book_id}")
-    @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<BorrowedBookResponse> returnBorrowBook(
             @PathVariable("book_id") Long bookId
     ){
@@ -93,6 +113,7 @@ public class BookController {
     }
 
     @PatchMapping("/borrow/return/approve/{book_id}")
+    @PreAuthorize("hasAuthority('LIBRARIAN')")
     public ResponseEntity<BorrowedBookResponse> approveReturnBorrowBook(
             @PathVariable("book_id") Long bookId
     ){

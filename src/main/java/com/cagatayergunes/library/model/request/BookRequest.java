@@ -3,21 +3,28 @@ package com.cagatayergunes.library.model.request;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDate;
+
+
 public record BookRequest(
         Long id,
 
-        @NotNull(message = "100")
-        @NotEmpty(message = "100")
+        @NotNull(message = "Title cannot be null")
+        @NotEmpty(message = "Title cannot be empty")
         String title,
-        @NotNull(message = "101")
-        @NotEmpty(message = "101")
+        @NotNull(message = "Author cannot be null")
+        @NotEmpty(message = "Author cannot be empty")
         String authorName,
-        @NotNull(message = "102")
-        @NotEmpty(message = "102")
+        @NotNull(message = "Isbn cannot be null")
+        @NotEmpty(message = "Isbn cannot be empty")
         String isbn,
-        @NotNull(message = "103")
-        @NotEmpty(message = "103")
+        @NotNull(message = "Synopsis cannot be null")
+        @NotEmpty(message = "Synopsis cannot be empty")
         String synopsis,
+        @NotNull(message = "Genre cannot be null")
+        @NotEmpty(message = "Genre cannot be empty")
+        String genre,
+        LocalDate publicationDate,
         boolean shareable
 ) {
 }

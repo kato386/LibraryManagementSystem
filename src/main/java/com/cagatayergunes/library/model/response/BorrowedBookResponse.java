@@ -2,6 +2,8 @@ package com.cagatayergunes.library.model.response;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Builder
@@ -12,6 +14,8 @@ public class BorrowedBookResponse {
     private String title;
     private String authorName;
     private String isbn;
+    private String genre;
+    private LocalDate publicationDate;
     private double rate;
     private boolean returned;
     private boolean returnApproved;

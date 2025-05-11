@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("feedbacks")
+@RequestMapping("feedback")
 @RequiredArgsConstructor
 @Tag(name = "feedback")
 public class FeedBackController {

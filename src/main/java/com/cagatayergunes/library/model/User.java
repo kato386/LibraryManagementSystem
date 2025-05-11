@@ -33,7 +33,6 @@ public class User implements UserDetails, Principal {
 
     private String lastName;
 
-    private String username;
     @Column(unique = true)
     private String email;
 
@@ -63,6 +62,11 @@ public class User implements UserDetails, Principal {
     }
 
     @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
     public String getPassword(){
         return password;
     }
@@ -72,7 +76,7 @@ public class User implements UserDetails, Principal {
 
         return this.roles
                 .stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .map(role -> new SimpleGrantedAuthority(role.getName().toString()))
                 .collect(Collectors.toList());
     }
 
