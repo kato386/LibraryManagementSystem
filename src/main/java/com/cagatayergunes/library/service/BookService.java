@@ -3,6 +3,7 @@ package com.cagatayergunes.library.service;
 import com.cagatayergunes.library.exception.handler.OperationNotPermittedException;
 import com.cagatayergunes.library.model.Book;
 import com.cagatayergunes.library.model.BookTransactionHistory;
+import com.cagatayergunes.library.model.RoleName;
 import com.cagatayergunes.library.model.User;
 import com.cagatayergunes.library.model.mapper.BookMapper;
 import com.cagatayergunes.library.model.request.BookRequest;
@@ -59,9 +60,15 @@ public class BookService {
 
     public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication connectedUser) {
         User user = getAuthenticatedUser(connectedUser);
+        boolean isLibrarian = isLibrarian(user);
         log.info("Fetching borrowed books for user: {}", user.getUsername());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<BookTransactionHistory> result = bookTransactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
+        Page<BookTransactionHistory> result;
+        if (isLibrarian){
+            result = bookTransactionHistoryRepository.findAllBorrowedBooks(pageable);
+        } else{
+            result = bookTransactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
+        }
         List<BorrowedBookResponse> responses = result.stream().map(bookMapper::toBorrowedBookResponse).toList();
         log.info("User {} has {} borrowed books", user.getUsername(), responses.size());
         return new PageResponse<>(responses, result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages(), result.isFirst(), result.isLast());
@@ -69,9 +76,17 @@ public class BookService {
 
     public PageResponse<BorrowedBookResponse> findAllReturnedBooks(int page, int size, Authentication connectedUser) {
         User user = getAuthenticatedUser(connectedUser);
+        boolean isLibrarian = isLibrarian(user);
         log.info("Fetching returned books for user: {}", user.getUsername());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<BookTransactionHistory> result = bookTransactionHistoryRepository.findAllReturnedBooks(pageable, user.getId());
+        Page<BookTransactionHistory> result ;
+
+        if (isLibrarian){
+            result = bookTransactionHistoryRepository.findAllReturnedBooks(pageable);
+        } else{
+            result = bookTransactionHistoryRepository.findAllReturnedBooks(pageable, user.getId());
+        }
+
         List<BorrowedBookResponse> responses = result.stream().map(bookMapper::toBorrowedBookResponse).toList();
         log.info("User {} has {} returned books", user.getUsername(), responses.size());
         return new PageResponse<>(responses, result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages(), result.isFirst(), result.isLast());
@@ -243,5 +258,10 @@ public class BookService {
         return (dueDate != null && LocalDateTime.now().isAfter(dueDate))
                 ? ChronoUnit.DAYS.between(dueDate, LocalDateTime.now())
                 : 0;
+    }
+
+    private boolean isLibrarian(User user){
+        return user.getRoles().stream()
+                .anyMatch(role -> role.getName().name().equalsIgnoreCase(RoleName.LIBRARIAN.name()));
     }
 }

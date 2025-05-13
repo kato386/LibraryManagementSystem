@@ -46,6 +46,7 @@ public class BookMapper {
                 .rate(history.getBook().getRate())
                 .returned(history.isReturned())
                 .returnApproved(history.isReturnApproved())
+                .email(history.getUser().getEmail())
                 .build();
     }
 }

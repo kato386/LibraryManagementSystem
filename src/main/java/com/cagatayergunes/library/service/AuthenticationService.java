@@ -112,6 +112,10 @@ public class AuthenticationService {
         );
         var claims = new HashMap<String, Object>();
         var user = ((User)auth.getPrincipal());
+        if(user.isAccountLocked()) {
+            log.warn("User account is locked: {}", user.getEmail());
+            throw new OperationNotPermittedException("Your account has been locked.");
+        }
         claims.put("fullName", user.getFullName());
         var jwt = jwtService.generateToken(claims, user);
         log.info("JWT generated for user {}", user.getEmail());

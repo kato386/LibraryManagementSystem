@@ -20,4 +20,5 @@ public class BorrowedBookResponse {
     private boolean returned;
     private boolean returnApproved;
     private long lateDays;
+    private String email;
 }

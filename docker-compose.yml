@@ -16,12 +16,36 @@ services:
     networks:
       - spring-demo
     restart: unless-stopped
+
   mail-dev:
     container_name: mail-dev-bsn
     image: maildev/maildev
     ports:
       - 1080:1080
       - 1025:1025
+    networks:
+      - spring-demo
+
+  app:
+    container_name: library-app
+    image: openjdk:21
+    volumes:
+      - ./target/library-management-system-0.0.1-SNAPSHOT.jar:/app/library.jar
+    working_dir: /app
+    command: ["java", "-jar", "library.jar"]
+    ports:
+      - 8088:8088
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/library_management_system
+      SPRING_DATASOURCE_USERNAME: username
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_MAIL_HOST: mail-dev
+      SPRING_MAIL_PORT: 1025
+    networks:
+      - spring-demo
+
 networks:
   spring-demo:
     driver: bridge
