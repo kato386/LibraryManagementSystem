@@ -34,7 +34,7 @@ public class LibraryManagementSystemApiApplication {
 
 			if (userRepository.findByFirstName("admin").isEmpty()) {
 				Role adminRole = roleRepository.findByName(RoleName.ADMIN)
-						.orElseThrow(() -> new IllegalStateException("Admin rolü eksik"));
+						.orElseThrow(() -> new IllegalStateException("Missing Admind Role"));
 
 				User admin = new User();
 				admin.setFirstName("admin");

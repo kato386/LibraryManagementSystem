@@ -1,7 +1,6 @@
 package com.cagatayergunes.library.exception.handler;
 
 import com.cagatayergunes.library.exception.ExceptionResponse;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -122,8 +121,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleException(Exception exp){
-        //TODO:logging
-        exp.printStackTrace();
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(
