@@ -1,6 +1,5 @@
 package com.cagatayergunes.library.controller;
 
-import com.cagatayergunes.library.model.User;
 import com.cagatayergunes.library.model.request.UpdateRoleRequest;
 import com.cagatayergunes.library.model.request.UserRequest;
 import com.cagatayergunes.library.model.response.UserResponse;

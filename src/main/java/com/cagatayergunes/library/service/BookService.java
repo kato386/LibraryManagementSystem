@@ -58,7 +58,7 @@ public class BookService {
     }
 
     public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication connectedUser) {
-        User user = (User) connectedUser.getPrincipal();
+        User user = getAuthenticatedUser(connectedUser);
         log.info("Fetching borrowed books for user: {}", user.getUsername());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<BookTransactionHistory> result = bookTransactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
@@ -68,7 +68,7 @@ public class BookService {
     }
 
     public PageResponse<BorrowedBookResponse> findAllReturnedBooks(int page, int size, Authentication connectedUser) {
-        User user = (User) connectedUser.getPrincipal();
+        User user = getAuthenticatedUser(connectedUser);
         log.info("Fetching returned books for user: {}", user.getUsername());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<BookTransactionHistory> result = bookTransactionHistoryRepository.findAllReturnedBooks(pageable, user.getId());
@@ -79,11 +79,7 @@ public class BookService {
 
     public BookResponse updateBook(Long bookId, BookRequest request) {
         log.info("Updating book with ID: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("No book found with ID: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id" + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
         book.setTitle(request.title());
         book.setAuthorName(request.authorName());
         book.setIsbn(request.isbn());
@@ -96,11 +92,7 @@ public class BookService {
 
     public BookResponse updateShareableStatus(Long bookId) {
         log.info("Toggling shareable status for book ID: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("Book not found for ID: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id" + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
         book.setShareable(!book.isShareable());
         bookRepository.save(book);
         log.info("Shareable status updated to {} for book ID {}", book.isShareable(), bookId);
@@ -109,18 +101,14 @@ public class BookService {
 
     public BorrowedBookResponse borrowBook(Long bookId, Authentication connectedUser) {
         log.info("User attempting to borrow book ID: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("Book not found: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id" + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
 
         if (!book.isShareable()) {
             log.warn("Book is not shareable: {}", bookId);
             throw new OperationNotPermittedException("The requested book cannot be borrowed since it is not shareable");
         }
 
-        User user = (User) connectedUser.getPrincipal();
+        User user = getAuthenticatedUser(connectedUser);
         if (bookTransactionHistoryRepository.isAlreadyBorrowedByUser(bookId)) {
             log.warn("Book ID {} is already borrowed", bookId);
             throw new OperationNotPermittedException("The requested book is already borrowed.");
@@ -142,11 +130,7 @@ public class BookService {
 
     public BorrowedBookResponse returnBorrowedBook(Long bookId) {
         log.info("Returning borrowed book: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("Book not found for return: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id" + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
 
         if (!book.isShareable()) {
             log.warn("Book not shareable for return: {}", bookId);
@@ -161,11 +145,7 @@ public class BookService {
 
         history.setReturned(true);
         bookTransactionHistoryRepository.save(history);
-        long lateDays = 0;
-
-        if (history.getDueDate() != null && LocalDateTime.now().isAfter(history.getDueDate())) {
-            lateDays = ChronoUnit.DAYS.between(history.getDueDate(), LocalDateTime.now());
-        }
+        long lateDays = calculateLateDays(history.getDueDate());
 
         log.info("Book returned: {}, lateDays={}", bookId, lateDays);
         BorrowedBookResponse response = bookMapper.toBorrowedBookResponse(history);
@@ -175,11 +155,7 @@ public class BookService {
 
     public BorrowedBookResponse approveReturnBorrowedBook(Long bookId) {
         log.info("Approving return of book: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("Book not found: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id" + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
 
         if (!book.isShareable()) {
             log.warn("Book not shareable: {}", bookId);
@@ -220,11 +196,7 @@ public class BookService {
 
     public void deleteBook(Long bookId) {
         log.info("Deleting book ID: {}", bookId);
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.error("Book not found for deletion: {}", bookId);
-                    return new EntityNotFoundException("No book found with the id " + bookId);
-                });
+        Book book = getBookByIdOrThrow(bookId);
 
         bookRepository.delete(book);
         log.info("Book deleted: {}", bookId);
@@ -256,5 +228,20 @@ public class BookService {
 
         log.info("Overdue books report generated with {} entries", overdueHistories.size());
         return reportBuilder.toString();
+    }
+
+    private Book getBookByIdOrThrow(Long bookId) {
+        return bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("No book found with the id " + bookId));
+    }
+
+    private User getAuthenticatedUser(Authentication auth) {
+        return (User) auth.getPrincipal();
+    }
+
+    private long calculateLateDays(LocalDateTime dueDate) {
+        return (dueDate != null && LocalDateTime.now().isAfter(dueDate))
+                ? ChronoUnit.DAYS.between(dueDate, LocalDateTime.now())
+                : 0;
     }
 }
