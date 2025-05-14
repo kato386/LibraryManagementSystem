@@ -50,5 +50,6 @@ http://localhost:1080/#/
    Open a web browser and go to http://localhost:8088/swagger-ui/index.html.
 
 ## Postman Documentation
+Set enviroments to local enviroments which is api_url = http://localhost - api_port = 8088
 
 [<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://app.getpostman.com/run-collection/25297446-41ab68a0-ebbe-4d00-80bc-d84e25d5040a?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D25297446-41ab68a0-ebbe-4d00-80bc-d84e25d5040a%26entityType%3Dcollection%26workspaceId%3Da763cde3-7fc5-4b3f-9a93-0ced81f06590)
